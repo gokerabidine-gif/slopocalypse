@@ -263,30 +263,37 @@ jobs:
           permissions/internet=true
           EOF
 
-      - name: Import project and export Android APK
+      - name: Import project for Android export
         shell: bash
         run: |
           set -euo pipefail
           GODOT="$PWD/tools/godot/Godot_v4.7.2-stable_linux.x86_64"
           test -x "$GODOT"
           "$GODOT" --headless --editor --path . --quit
-          set +e
+
+      # Export is isolated so validation runs even if Godot aborts during shutdown.
+      - name: Export Android APK
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          GODOT="$PWD/tools/godot/Godot_v4.7.2-stable_linux.x86_64"
           "$GODOT" --headless --path . --export-debug Android build/android/Slopocalypse.apk
-          export_status=$?
-          set -e
-          # Godot may abort during shutdown after successfully writing and signing the APK.
-          # Treat this as acceptable only if the APK exists and all integrity checks pass.
-          test -s build/android/Slopocalypse.apk
-          unzip -t build/android/Slopocalypse.apk
+
+      - name: Validate Android APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="build/android/Slopocalypse.apk"
+          test -s "$APK"
+          unzip -t "$APK"
           AAPT="$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)"
           test -x "$AAPT"
-          "$AAPT" dump badging build/android/Slopocalypse.apk | head -n 5
-          echo "Godot export process exit code: $export_status (APK validation will determine success)"
-          unzip -Z1 build/android/Slopocalypse.apk | grep -E '^lib/arm64-v8a/lib(example|inventory|missions|persistence|voxkit|weapons)_gd\.so$'
+          "$AAPT" dump badging "$APK" | head -n 5
+          unzip -Z1 "$APK" | grep -E '^lib/arm64-v8a/lib(example|inventory|missions|persistence|voxkit|weapons)_gd\.so$'
           for lib in example inventory missions persistence voxkit weapons; do
-            unzip -Z1 build/android/Slopocalypse.apk | grep -q "^lib/arm64-v8a/lib${lib}_gd\.so$"
+            unzip -Z1 "$APK" | grep -q "^lib/arm64-v8a/lib${lib}_gd\.so$"
           done
-
       - name: Upload Slopocalypse Android APK
         uses: actions/upload-artifact@v4
         with:
