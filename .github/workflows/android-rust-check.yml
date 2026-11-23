@@ -291,68 +291,9 @@ jobs:
           APK="build/android/Slopocalypse.apk"
           test -s "$APK"
           unzip -t "$APK" >/dev/null
-          echo "APK archive verified: $(du -h "$APK" | cut -f1)"
+          echo "APK archive verified"
           for lib in example inventory missions persistence voxkit weapons; do
             unzip -Z1 "$APK" | grep -F "lib/arm64-v8a/lib${lib}_gd.so" >/dev/null
-          done
-      - name: Upload Slopocalypse Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: slopocalypse-android-arm64-apk
-          path: build/android/Slopocalypse.apk
-          if-no-files-found: error
-          retention-days: 14
-
-          unzip -Z1 "$APK" | grep -E '^lib/arm64-v8a/lib(example|inventory|missions|persistence|voxkit|weapons)_gd\.so$'
-          for lib in example inventory missions persistence voxkit weapons; do
-            unzip -Z1 "$APK" | grep -q "^lib/arm64-v8a/lib${lib}_gd\.so$"
-          done
-      - name: Upload Slopocalypse Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: slopocalypse-android-arm64-apk
-          path: build/android/Slopocalypse.apk
-          if-no-files-found: error
-          retention-days: 14
-
-          unzip -Z1 "$APK" | grep -E '^lib/arm64-v8a/lib(example|inventory|missions|persistence|voxkit|weapons)_gd\.so
-          for lib in example inventory missions persistence voxkit weapons; do
-            unzip -Z1 "$APK" | grep -q "^lib/arm64-v8a/lib${lib}_gd\.so$"
-          done
-      - name: Upload Slopocalypse Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: slopocalypse-android-arm64-apk
-          path: build/android/Slopocalypse.apk
-          if-no-files-found: error
-          retention-days: 14
-
-          unzip -Z1 "$APK" | grep -E '^lib/arm64-v8a/lib(example|inventory|missions|persistence|voxkit|weapons)_gd\.so$'
-          for lib in example inventory missions persistence voxkit weapons; do
-            unzip -Z1 "$APK" | grep -q "^lib/arm64-v8a/lib${lib}_gd\.so$"
-          done
-      - name: Upload Slopocalypse Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: slopocalypse-android-arm64-apk
-          path: build/android/Slopocalypse.apk
-          if-no-files-found: error
-          retention-days: 14
-
-          for lib in example inventory missions persistence voxkit weapons; do
-            unzip -Z1 "$APK" | grep -q "^lib/arm64-v8a/lib${lib}_gd\.so$"
-          done
-      - name: Upload Slopocalypse Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: slopocalypse-android-arm64-apk
-          path: build/android/Slopocalypse.apk
-          if-no-files-found: error
-          retention-days: 14
-
-          unzip -Z1 "$APK" | grep -E '^lib/arm64-v8a/lib(example|inventory|missions|persistence|voxkit|weapons)_gd\.so$'
-          for lib in example inventory missions persistence voxkit weapons; do
-            unzip -Z1 "$APK" | grep -q "^lib/arm64-v8a/lib${lib}_gd\.so$"
           done
       - name: Upload Slopocalypse Android APK
         uses: actions/upload-artifact@v4
