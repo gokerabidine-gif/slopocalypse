@@ -74,11 +74,21 @@ jobs:
             echo "Prepared Android ARM64 libraries for $crate"
           done
 
+      - name: Stage Android ARM64 GDExtension libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/android-libraries
+          for module in example inventory missions persistence voxkit weapons; do
+            mkdir -p "build/android-libraries/modules/$module/bin/android"
+            cp -a "modules/$module/bin/android/." "build/android-libraries/modules/$module/bin/android/"
+          done
+
       - name: Upload Android ARM64 GDExtension libraries
         uses: actions/upload-artifact@v4
         with:
           name: slopocalypse-android-arm64-libraries
-          path: modules/*/bin/android/
+          path: build/android-libraries/
           if-no-files-found: error
           retention-days: 7
 
