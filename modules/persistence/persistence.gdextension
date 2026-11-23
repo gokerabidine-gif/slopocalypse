@@ -14,3 +14,5 @@ linux.debug.arm64 = "res://modules/persistence/bin/linux/debug/libpersistence_gd
 linux.release.arm64 = "res://modules/persistence/bin/linux/release/libpersistence_gd.so"
 macos.debug = "res://modules/persistence/bin/macos/debug/libpersistence_gd.dylib"
 macos.release = "res://modules/persistence/bin/macos/release/libpersistence_gd.dylib"
+android.debug.arm64 = "res://modules/persistence/bin/android/debug/libpersistence_gd.so"
+android.release.arm64 = "res://modules/persistence/bin/android/release/libpersistence_gd.so"
