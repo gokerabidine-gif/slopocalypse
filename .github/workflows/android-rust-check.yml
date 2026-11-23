@@ -162,19 +162,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cargo build --workspace
-          cargo build --workspace --release
-          for manifest in modules/*/rust/gd/Cargo.toml; do
-            module="$(dirname "$(dirname "$(dirname "$manifest")")")"
+          for module in example inventory missions persistence voxkit weapons; do
+            manifest="modules/$module/rust/gd/Cargo.toml"
+            test -s "$manifest"
             crate="$(sed -n 's/^name = "\(.*\)"/\1/p' "$manifest" | head -n 1)"
             test -n "$crate"
-            mkdir -p "$module/bin/linux/debug" "$module/bin/linux/release"
-            cp "target/debug/lib$crate.so" "$module/bin/linux/debug/lib$crate.so"
-            cp "target/release/lib$crate.so" "$module/bin/linux/release/lib$crate.so"
-          done
-          for module in example inventory missions persistence voxkit weapons; do
+            echo "::group::Build $module Linux debug extension"
+            cargo build --manifest-path "$manifest" --verbose
+            mkdir -p "modules/$module/bin/linux/debug" "modules/$module/bin/linux/release"
+            cp "target/debug/lib$crate.so" "modules/$module/bin/linux/debug/lib$crate.so"
+            echo "::endgroup::"
+            echo "::group::Build $module Linux release extension"
+            cargo build --manifest-path "$manifest" --release --verbose
+            cp "target/release/lib$crate.so" "modules/$module/bin/linux/release/lib$crate.so"
+            echo "::endgroup::"
             test -s "modules/$module/bin/android/release/lib${module}_gd.so"
-            test -s "modules/$module/bin/linux/debug/lib${module}_gd.so"
+            echo "Validated Android and Linux extensions for $module"
           done
 
       - name: Configure Android export preset and editor SDK paths
