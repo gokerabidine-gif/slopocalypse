@@ -139,6 +139,20 @@ jobs:
           name: slopocalypse-android-arm64-libraries
           path: .
       
+      - name: Copy release Rust libraries into Android debug paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          for module in example inventory missions persistence voxkit weapons; do
+            src="modules/$module/bin/android/release/lib${module}_gd.so"
+            dst="modules/$module/bin/android/debug/lib${module}_gd.so"
+            test -s "$src"
+            mkdir -p "$(dirname "$dst")"
+            cp "$src" "$dst"
+            test -s "$dst"
+            echo "Prepared non-empty Android debug library: $dst"
+          done
+
       - name: Install Java and Android SDK components
         uses: actions/setup-java@v4
         with:
@@ -290,8 +304,18 @@ jobs:
           test -s "$APK"
           unzip -t "$APK" >/dev/null
           echo "APK archive verified"
+          TMP_LIB="$(mktemp)"
+          trap 'rm -f "$TMP_LIB"' EXIT
           for lib in example inventory missions persistence voxkit weapons; do
-            unzip -Z1 "$APK" | grep -F "lib/arm64-v8a/lib${lib}_gd.so" >/dev/null
+            entry="lib/arm64-v8a/lib${lib}_gd.so"
+            unzip -p "$APK" "$entry" > "$TMP_LIB"
+            size="$(stat -c%s "$TMP_LIB")"
+            if [ "$size" -lt 1000000 ]; then
+              echo "ERROR: ${entry} is missing or too small in APK (${size} bytes)" >&2
+              exit 1
+            fi
+            readelf -h "$TMP_LIB" | grep -E "Class:.*ELF64|Machine:.*AArch64" >/dev/null
+            echo "Validated ${entry}: ${size} bytes, ARM64 ELF"
           done
       - name: Upload Slopocalypse Android APK
         uses: actions/upload-artifact@v4
