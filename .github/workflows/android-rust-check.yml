@@ -9,6 +9,7 @@ on:
       - "rust-toolchain.toml"
       - "modules/**/rust/**"
       - "modules/**/*.gdextension"
+      - "core/net.gd"
       - ".github/workflows/android-rust-check.yml"
   workflow_dispatch:
 
