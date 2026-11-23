@@ -25,9 +25,12 @@ jobs:
         shell: bash
         run: rustup target add aarch64-linux-android
 
-      - uses: android-actions/setup-ndk@v3
-        with:
-          ndk-version: 28.1.13356709
+      - name: Install Android NDK
+        shell: bash
+        run: |
+          SDKMANAGER="$(command -v sdkmanager || find "$ANDROID_HOME" -name sdkmanager -type f | head -n 1)"
+          "$SDKMANAGER" --install "ndk;28.1.13356709"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.1.13356709" >> "$GITHUB_ENV"
 
       - name: Configure Android linker
         shell: bash
