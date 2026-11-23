@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: slopocalypse-android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   android-arm64:
     runs-on: ubuntu-latest
@@ -180,26 +184,26 @@ jobs:
 
       - name: Build native Linux GDExtensions for the editor
         shell: bash
+        env:
+          CARGO_BUILD_JOBS: 2
         run: |
           set -euo pipefail
+          # Build workspace in shared Cargo invocations to avoid repeatedly compiling dependencies.
+          timeout 45m cargo build --workspace
+          timeout 45m cargo build --workspace --release
           for module in example inventory missions persistence voxkit weapons; do
             manifest="modules/$module/rust/gd/Cargo.toml"
             test -s "$manifest"
             crate="$(sed -n 's/^name = "\(.*\)"/\1/p' "$manifest" | head -n 1)"
             test -n "$crate"
-            echo "::group::Build $module Linux debug extension"
-            cargo build --manifest-path "$manifest" --verbose
             mkdir -p "modules/$module/bin/linux/debug" "modules/$module/bin/linux/release"
+            test -s "target/debug/lib$crate.so"
+            test -s "target/release/lib$crate.so"
             cp "target/debug/lib$crate.so" "modules/$module/bin/linux/debug/lib$crate.so"
-            echo "::endgroup::"
-            echo "::group::Build $module Linux release extension"
-            cargo build --manifest-path "$manifest" --release --verbose
             cp "target/release/lib$crate.so" "modules/$module/bin/linux/release/lib$crate.so"
-            echo "::endgroup::"
             test -s "modules/$module/bin/android/release/lib${module}_gd.so"
             echo "Validated Android and Linux extensions for $module"
           done
-
       - name: Configure Android export preset and editor SDK paths
         shell: bash
         run: |
