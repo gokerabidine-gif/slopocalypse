@@ -210,6 +210,8 @@ jobs:
           export/android/adb = "$ANDROID_SDK_ROOT/platform-tools/adb"
           EOF
           DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
+          test -s "$DEBUG_KEYSTORE"
+          keytool -list -keystore "$DEBUG_KEYSTORE" -storepass android -alias androiddebugkey
           cat > export_presets.cfg <<EOF
           [preset.0]
           name="Android"
