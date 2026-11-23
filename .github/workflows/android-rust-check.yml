@@ -64,7 +64,18 @@ jobs:
           } >> "$GITHUB_ENV"
           echo "Android NDK and C/C++ cross-compilers configured"
 
-      - name: Compile debug and release Rust extensions for Android arm64
+      - name: Cache Cargo build outputs
+        uses: actions/cache@v6
+        with:
+          path: |
+            target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-android-arm64-cargo-${{ hashFiles('Cargo.lock', 'modules/**/rust/**/Cargo.toml', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-android-arm64-cargo-
+
+      - name: Compile Android release Rust extensions for arm64
         shell: bash
         env:
           CARGO_BUILD_JOBS: 2
@@ -74,16 +85,12 @@ jobs:
             module="$(dirname "$(dirname "$(dirname "$manifest")")")"
             crate="$(sed -n 's/^name = "\(.*\)"/\1/p' "$manifest" | head -n 1)"
             test -n "$crate"
-            echo "::group::Build Android ARM64 debug $crate"
-            timeout 15m cargo build --manifest-path "$manifest" --target aarch64-linux-android
-            echo "::endgroup::"
             echo "::group::Build Android ARM64 release $crate"
-            timeout 15m cargo build --manifest-path "$manifest" --release --target aarch64-linux-android
+            timeout 20m cargo build --manifest-path "$manifest" --release --target aarch64-linux-android
             echo "::endgroup::"
-            mkdir -p "$module/bin/android/debug" "$module/bin/android/release"
-            cp "target/aarch64-linux-android/debug/lib$crate.so" "$module/bin/android/debug/lib$crate.so"
+            mkdir -p "$module/bin/android/release"
             cp "target/aarch64-linux-android/release/lib$crate.so" "$module/bin/android/release/lib$crate.so"
-            echo "Prepared Android ARM64 libraries for $crate"
+            echo "Prepared Android ARM64 release library for $crate"
           done
 
       - name: Stage Android ARM64 GDExtension libraries
