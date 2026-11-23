@@ -161,6 +161,18 @@ func _ready() -> void:
 func start_solo() -> void:
 	if mode != Mode.SOLO or awaiting_menu:
 		return
+	# Android cannot spawn a second Godot process for the dedicated solo server.
+	# Use the built-in offline peer on-device; it acts as the local server so modules
+	# and gameplay can initialize without attempting OS.create_process().
+	if OS.has_feature("android"):
+		multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+		mode = Mode.SOLO
+		awaiting_menu = false
+		host = "127.0.0.1"
+		port = DEFAULT_PORT
+		solo_server_pid = -1
+		Log.info(&"net", "Android solo: using in-process offline peer")
+		return
 	var p := SoloServer.pick_port()
 	if p < 0:
 		_fail("No free port for the solo server.")
