@@ -28,9 +28,27 @@ jobs:
       - name: Install Android NDK
         shell: bash
         run: |
-          SDKMANAGER="$(command -v sdkmanager || find "$ANDROID_HOME" -name sdkmanager -type f | head -n 1)"
-          "$SDKMANAGER" --install "ndk;28.1.13356709"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.1.13356709" >> "$GITHUB_ENV"
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          if [ -z "$SDK_ROOT" ]; then
+            echo "Android SDK root is not configured" >&2
+            exit 1
+          fi
+          if [ -d "$SDK_ROOT/ndk/28.1.13356709" ]; then
+            NDK_DIR="$SDK_ROOT/ndk/28.1.13356709"
+          else
+            SDKMANAGER="$(command -v sdkmanager || find "$SDK_ROOT" -name sdkmanager -type f | head -n 1)"
+            if [ -z "$SDKMANAGER" ]; then
+              echo "sdkmanager was not found under $SDK_ROOT" >&2
+              exit 1
+            fi
+            yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses || true
+            "$SDKMANAGER" --verbose --sdk_root="$SDK_ROOT" --install "ndk;28.1.13356709"
+            NDK_DIR="$SDK_ROOT/ndk/28.1.13356709"
+          fi
+          test -x "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
+          echo "ANDROID_NDK_HOME=$NDK_DIR" >> "$GITHUB_ENV"
+          echo "Installed NDK at $NDK_DIR"
 
       - name: Configure Android linker
         shell: bash
