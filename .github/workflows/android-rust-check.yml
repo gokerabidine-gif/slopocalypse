@@ -38,15 +38,21 @@ jobs:
           if [ -d "$SDK_ROOT/ndk/28.1.13356709" ]; then
             NDK_DIR="$SDK_ROOT/ndk/28.1.13356709"
           else
-            SDKMANAGER="$(command -v sdkmanager || find "$SDK_ROOT" -name sdkmanager -type f | head -n 1)"
-            if [ -z "$SDKMANAGER" ]; then
-              echo "sdkmanager was not found under $SDK_ROOT" >&2
-              exit 1
+            # GitHub-hosted Android images may already contain a usable NDK.
+            # Prefer an installed version to avoid a large, unnecessary SDK download.
+            NDK_DIR="$(find "$SDK_ROOT/ndk" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -V | tail -n 1 || true)"
+            if [ -z "$NDK_DIR" ]; then
+              SDKMANAGER="$(command -v sdkmanager || find "$SDK_ROOT" -name sdkmanager -type f | head -n 1)"
+              if [ -z "$SDKMANAGER" ]; then
+                echo "sdkmanager was not found under $SDK_ROOT" >&2
+                exit 1
+              fi
+              yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses || true
+              timeout 20m "$SDKMANAGER" --verbose --sdk_root="$SDK_ROOT" --install "ndk;28.1.13356709"
+              NDK_DIR="$SDK_ROOT/ndk/28.1.13356709"
             fi
-            yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses || true
-            "$SDKMANAGER" --verbose --sdk_root="$SDK_ROOT" --install "ndk;28.1.13356709"
-            NDK_DIR="$SDK_ROOT/ndk/28.1.13356709"
           fi
+          echo "Using Android NDK: $NDK_DIR"
           TOOLCHAIN="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin"
           test -x "$TOOLCHAIN/aarch64-linux-android24-clang"
           test -x "$TOOLCHAIN/llvm-ar"
