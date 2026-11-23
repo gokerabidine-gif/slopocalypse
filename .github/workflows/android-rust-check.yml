@@ -1,0 +1,38 @@
+name: Android Rust libraries
+
+on:
+  push:
+    branches: [android-apk-experiment]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "modules/**/rust/**"
+      - ".github/workflows/android-rust-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-arm64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust Android target
+        shell: bash
+        run: rustup target add aarch64-linux-android
+
+      - uses: android-actions/setup-ndk@v3
+        with:
+          ndk-version: 28.1.13356709
+
+      - name: Configure Android linker
+        shell: bash
+        run: |
+          echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang" >> "$GITHUB_ENV"
+
+      - name: Compile all Rust workspace crates for Android arm64
+        run: cargo build --workspace --release --target aarch64-linux-android
