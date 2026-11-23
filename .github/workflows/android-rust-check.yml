@@ -75,20 +75,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-android-arm64-cargo-
 
-      - name: Compile Android release Rust extensions for arm64
+      - name: Compile Android release Rust workspace for arm64
         shell: bash
         env:
           CARGO_BUILD_JOBS: 2
         run: |
           set -euo pipefail
+          # Compile the workspace in one Cargo invocation so shared dependencies
+          # are resolved and scheduled together, rather than rebuilding module-by-module.
+          timeout 45m cargo build --workspace --release --target aarch64-linux-android
           for manifest in modules/*/rust/gd/Cargo.toml; do
             module="$(dirname "$(dirname "$(dirname "$manifest")")")"
             crate="$(sed -n 's/^name = "\(.*\)"/\1/p' "$manifest" | head -n 1)"
             test -n "$crate"
-            echo "::group::Build Android ARM64 release $crate"
-            timeout 20m cargo build --manifest-path "$manifest" --release --target aarch64-linux-android
-            echo "::endgroup::"
             mkdir -p "$module/bin/android/release"
+            test -s "target/aarch64-linux-android/release/lib$crate.so"
             cp "target/aarch64-linux-android/release/lib$crate.so" "$module/bin/android/release/lib$crate.so"
             echo "Prepared Android ARM64 release library for $crate"
           done
