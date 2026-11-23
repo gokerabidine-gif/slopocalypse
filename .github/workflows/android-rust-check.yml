@@ -66,14 +66,20 @@ jobs:
 
       - name: Compile debug and release Rust extensions for Android arm64
         shell: bash
+        env:
+          CARGO_BUILD_JOBS: 2
         run: |
           set -euo pipefail
-          cargo build --workspace --target aarch64-linux-android
-          cargo build --workspace --release --target aarch64-linux-android
           for manifest in modules/*/rust/gd/Cargo.toml; do
             module="$(dirname "$(dirname "$(dirname "$manifest")")")"
             crate="$(sed -n 's/^name = "\(.*\)"/\1/p' "$manifest" | head -n 1)"
             test -n "$crate"
+            echo "::group::Build Android ARM64 debug $crate"
+            timeout 15m cargo build --manifest-path "$manifest" --target aarch64-linux-android
+            echo "::endgroup::"
+            echo "::group::Build Android ARM64 release $crate"
+            timeout 15m cargo build --manifest-path "$manifest" --release --target aarch64-linux-android
+            echo "::endgroup::"
             mkdir -p "$module/bin/android/debug" "$module/bin/android/release"
             cp "target/aarch64-linux-android/debug/lib$crate.so" "$module/bin/android/debug/lib$crate.so"
             cp "target/aarch64-linux-android/release/lib$crate.so" "$module/bin/android/release/lib$crate.so"
