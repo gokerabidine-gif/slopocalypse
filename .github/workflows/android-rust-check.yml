@@ -262,10 +262,18 @@ jobs:
           GODOT="$PWD/tools/godot/Godot_v4.7.2-stable_linux.x86_64"
           test -x "$GODOT"
           "$GODOT" --headless --editor --path . --quit
+          set +e
           "$GODOT" --headless --path . --export-debug Android build/android/Slopocalypse.apk
+          export_status=$?
+          set -e
+          # Godot may abort during shutdown after successfully writing and signing the APK.
+          # Treat this as acceptable only if the APK exists and all integrity checks pass.
           test -s build/android/Slopocalypse.apk
           unzip -t build/android/Slopocalypse.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt" dump badging build/android/Slopocalypse.apk | head -n 5
+          AAPT="$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)"
+          test -x "$AAPT"
+          "$AAPT" dump badging build/android/Slopocalypse.apk | head -n 5
+          echo "Godot export process exit code: $export_status (APK validation will determine success)"
           unzip -Z1 build/android/Slopocalypse.apk | grep -E '^lib/arm64-v8a/lib(example|inventory|missions|persistence|voxkit|weapons)_gd\.so$'
           for lib in example inventory missions persistence voxkit weapons; do
             unzip -Z1 build/android/Slopocalypse.apk | grep -q "^lib/arm64-v8a/lib${lib}_gd\.so$"
