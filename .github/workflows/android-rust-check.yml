@@ -194,7 +194,8 @@ jobs:
           export/android/java_sdk_path = "$JAVA_HOME"
           export/android/adb = "$ANDROID_SDK_ROOT/platform-tools/adb"
           EOF
-          cat > export_presets.cfg <<'EOF'
+          DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
+          cat > export_presets.cfg <<EOF
           [preset.0]
           name="Android"
           platform="Android"
@@ -222,7 +223,7 @@ jobs:
           package/unique_name="org.slopocalypse.game"
           package/name="Slopocalypse"
           package/signed=true
-          keystore/debug="$HOME/.android/debug.keystore"
+          keystore/debug="$DEBUG_KEYSTORE"
           keystore/debug_user="androiddebugkey"
           keystore/debug_password="android"
           keystore/release=""
